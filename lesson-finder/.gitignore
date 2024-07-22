@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### authentication constants ###
+/src/main/java/de/lillyundjack/lesson_finder/service/AuthenticationConstants.java
