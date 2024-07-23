@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -43,7 +45,7 @@ public class TopicSearchService {
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             if (response.getStatusLine().getStatusCode() == 200) {
                 String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                return parseInfo(responseBody);
+                return parseInfo(responseBody, searchTerm);
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP status code: " + response.getStatusLine().getStatusCode());
             }
@@ -55,7 +57,7 @@ public class TopicSearchService {
     
 
 
-    private String parseInfo(String jsonResponse) {
+    private String parseInfo(String jsonResponse, String searchTerm) {
         StringBuilder formattedInfo = new StringBuilder();
         Set<String> uniqueLinks = new HashSet<>();
         try {
@@ -64,6 +66,8 @@ public class TopicSearchService {
                 String title = node.path("title").path("rendered").asText();
                 String link = node.path("link").asText();
                 String content = node.path("content").path("rendered").asText();
+
+                String sentence = extractSentence(content, searchTerm);
 
                 Document doc = Jsoup.parse(content);
                 Elements links = doc.select("a[href]");
@@ -86,6 +90,7 @@ public class TopicSearchService {
                 }
 
                 formattedInfo.append("Lektion: ").append(title).append("\n")
+                            .append(sentence).append(" (...)").append("\n")
                             .append("<p>Link: <a href=\"").append(link).append("\" target=\"_blank\">").append(link).append("</a></p>")
                             .append("<div>").append(linksHtml).append(videosHtml).append("</div>")
                             .append("\n\n");
@@ -97,4 +102,20 @@ public class TopicSearchService {
         return formattedInfo.toString();
 
         }
+
+
+    private String extractSentence(String content, String searchTerm) {
+        if (content == null || searchTerm == null) {
+            return "Invalid input.";
+        }
+        String regex = "(?s)([^.!?]*?\\b" + Pattern.quote(searchTerm) + "\\b[^.!?]*[.!?])";
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(content);
+
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        return "Search term not found.";
+    }
     }
