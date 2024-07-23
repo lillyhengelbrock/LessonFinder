@@ -89,11 +89,11 @@ public class TopicSearchService {
                     }
                 }
 
-                formattedInfo.append("Lektion: ").append(title).append("\n")
-                            .append(sentence).append(" (...)").append("\n")
+                formattedInfo.append("<p><b>Lektion: ").append(title).append("</b></p>")
+                            .append(sentence).append(" (...)").append("<br>")
                             .append("<p>Link: <a href=\"").append(link).append("\" target=\"_blank\">").append(link).append("</a></p>")
                             .append("<div>").append(linksHtml).append(videosHtml).append("</div>")
-                            .append("\n\n");
+                            .append("<br><br>");
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse JSON response. Exception: " + e.getMessage(), e);

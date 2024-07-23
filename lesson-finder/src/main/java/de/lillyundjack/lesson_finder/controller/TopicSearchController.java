@@ -20,13 +20,13 @@ public class TopicSearchController {
 
     @GetMapping("/search")
     public String searchPage() {
-        return "search"; // returns the search.html template
+        return "search"; 
     }
 
     @GetMapping("/searchResults")
     public String searchResults(@RequestParam("searchTerm") String searchTerm, Model model) {
         String results = topicSearchService.searchTopics(searchTerm);
         model.addAttribute("results", results);
-        return "searchResults"; // returns the searchResults.html template
+        return "searchResults"; 
     }
 }
