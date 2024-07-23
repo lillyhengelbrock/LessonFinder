@@ -2,6 +2,8 @@ package de.lillyundjack.lesson_finder.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -9,6 +11,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -51,13 +57,37 @@ public class TopicSearchService {
 
     private String parseInfo(String jsonResponse) {
         StringBuilder formattedInfo = new StringBuilder();
+        Set<String> uniqueLinks = new HashSet<>();
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
             for (JsonNode node : root) {
                 String title = node.path("title").path("rendered").asText();
                 String link = node.path("link").asText();
+                String content = node.path("content").path("rendered").asText();
+
+                Document doc = Jsoup.parse(content);
+                Elements links = doc.select("a[href]");
+                Elements iframes = doc.select("iframe");
+
+                StringBuilder linksHtml = new StringBuilder();
+                for (Element linkElement : links) {
+                    String href = linkElement.attr("href");
+                    if (uniqueLinks.add(href) && href.contains(".pdf")) {
+                        linksHtml.append("<p>pdf: <a href=\"").append(href).append("\" target=\"_blank\">").append(href).append("</a></p>");
+                
+                    }
+                }
+                StringBuilder videosHtml = new StringBuilder();
+                for (Element iframe : iframes) {
+                    String src = iframe.attr("src");
+                    if (src.contains("youtube-nocookie.com")) {
+                        videosHtml.append("<p>YouTube Video: <a href=\"").append(src).append("\" target=\"_blank\">Hier Schauen</a></p>\n");
+                    }
+                }
+
                 formattedInfo.append("Lektion: ").append(title).append("\n")
-                            .append("<p>Link: <a href=\"").append(link).append("\" target=\"_blank\">").append(link).append("</a></p>\n")
+                            .append("<p>Link: <a href=\"").append(link).append("\" target=\"_blank\">").append(link).append("</a></p>")
+                            .append("<div>").append(linksHtml).append(videosHtml).append("</div>")
                             .append("\n\n");
             }
         } catch (IOException e) {
