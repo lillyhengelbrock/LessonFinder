@@ -55,7 +55,10 @@ public class TopicSearchService {
             JsonNode root = objectMapper.readTree(jsonResponse);
             for (JsonNode node : root) {
                 String title = node.path("title").path("rendered").asText();
-                formattedInfo.append("Lektion: ").append(title).append("\n");
+                String link = node.path("link").asText();
+                formattedInfo.append("Lektion: ").append(title).append("\n")
+                            .append("<p>Link: <a href=\"").append(link).append("\" target=\"_blank\">").append(link).append("</a></p>\n")
+                            .append("\n\n");
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse JSON response. Exception: " + e.getMessage(), e);
