@@ -1,8 +1,7 @@
 package de.lillyundjack.lesson_finder.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -15,8 +14,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.lillyundjack.lesson_finder.DataTransferObject;
-
 @Service
 public class TopicSearchService {
 
@@ -27,7 +24,7 @@ public class TopicSearchService {
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<DataTransferObject> searchTopics(String searchTerm) {
+    public String searchTopics(String searchTerm) {
         String url = apiUrl + "?search=" + searchTerm;
 
         HttpGet request = new HttpGet(url);
@@ -39,8 +36,8 @@ public class TopicSearchService {
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             if (response.getStatusLine().getStatusCode() == 200) {
-                String responseBody = EntityUtils.toString(response.getEntity());
-                return parseCourseInfo(responseBody);
+                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                return parseInfo(responseBody);
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP status code: " + response.getStatusLine().getStatusCode());
             }
@@ -52,20 +49,19 @@ public class TopicSearchService {
     
 
 
-    private List<DataTransferObject> parseCourseInfo(String jsonResponse) {
-        List<DataTransferObject> courseInfoList = new ArrayList<>();
+    private String parseInfo(String jsonResponse) {
+        StringBuilder formattedInfo = new StringBuilder();
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
             for (JsonNode node : root) {
-                JsonNode titleNode = node.path("title");
-                String title = titleNode.path("rendered").asText();
-                courseInfoList.add(new DataTransferObject(title));
+                String title = node.path("title").path("rendered").asText();
+                formattedInfo.append("Lektion: ").append(title).append("\n");
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse JSON response. Exception: " + e.getMessage(), e);
         
         }
-        return courseInfoList;
+        return formattedInfo.toString();
 
         }
     }
