@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Suche</title>
+</head>
+<body>
+    <h1>Durchsuche die Lektionen</h1>
+    <form action="#" th:action="@{/searchResults}" method="get">
+        <label for="searchTerm">Gib deinen Suchbegriff ein:</label>
+        <input type="text" id="searchTerm" name="searchTerm" required>
+        <button type="submit">Suchen!</button>
+    </form>
+</body>
+</html>
