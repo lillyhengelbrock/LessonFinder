@@ -1,6 +1,8 @@
 package de.lillyundjack.lesson_finder.service;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,8 +40,13 @@ public class TopicSearchService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String searchTopics(String searchTerm) {
-        
-        String url = apiUrl + "?search=" + searchTerm + "&per_page=20";
+    
+        String encodedSearchTerm;
+        try { encodedSearchTerm = URLEncoder.encode(searchTerm, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+                return "Encoding error: " + e.getMessage();
+            }
+        String url = apiUrl + "?search=" + encodedSearchTerm + "&per_page=20";
 
         HttpGet request = new HttpGet(url);
         String auth = username + ":" + password;
@@ -56,7 +63,8 @@ public class TopicSearchService {
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP status code: " + response.getStatusLine().getStatusCode());
             }
-        } catch (IOException | RuntimeException e) {
+        } 
+        catch (IOException | RuntimeException e) {
             throw new RuntimeException("Failed to fetch data. Exception: " + e.getMessage(), e);
         }
         
