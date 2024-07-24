@@ -134,7 +134,7 @@ public class TopicSearchService {
             jsonList.add(jsonArray.getJSONObject(i));
         }
 
-        jsonList.sort(Comparator.comparing(lesson -> lesson.getString("date")));
+        jsonList.sort(Comparator.comparing(lesson -> lesson.getString("date"), Comparator.reverseOrder()));
 
         return new JSONArray(jsonList);
     }
