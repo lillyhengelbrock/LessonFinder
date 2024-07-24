@@ -2,7 +2,10 @@ package de.lillyundjack.lesson_finder.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,6 +16,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -33,7 +38,8 @@ public class TopicSearchService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String searchTopics(String searchTerm) {
-        String url = apiUrl + "?search=" + searchTerm;
+        
+        String url = apiUrl + "?search=" + searchTerm + "&per_page=20";
 
         HttpGet request = new HttpGet(url);
         String auth = username + ":" + password;
@@ -45,7 +51,8 @@ public class TopicSearchService {
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             if (response.getStatusLine().getStatusCode() == 200) {
                 String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                return parseInfo(responseBody, searchTerm);
+                JSONArray sortedJsonArray = sortJsonArrayByDate(responseBody);
+                return parseInfo(sortedJsonArray.toString(), searchTerm);
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP status code: " + response.getStatusLine().getStatusCode());
             }
@@ -54,6 +61,7 @@ public class TopicSearchService {
         }
         
     }
+
     
 
 
@@ -116,6 +124,18 @@ public class TopicSearchService {
             return matcher.group(1).trim();
         }
 
-        return "Search term not found.";
+        return ".";
+    }
+    private JSONArray sortJsonArrayByDate(String responseBody) {
+        JSONArray jsonArray = new JSONArray(responseBody);
+        List<JSONObject> jsonList = new ArrayList<>();
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            jsonList.add(jsonArray.getJSONObject(i));
+        }
+
+        jsonList.sort(Comparator.comparing(lesson -> lesson.getString("date")));
+
+        return new JSONArray(jsonList);
     }
     }
